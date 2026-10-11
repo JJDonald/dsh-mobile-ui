@@ -1,0 +1,682 @@
+/* dsh-mobile-ui — phone layout for DSH Web (≤760px).
+ * Every rule is scoped under html[data-mui="mobile"], set by the head script
+ * the host half injects; wider windows never match.
+ * Hooks: data-* attributes and CSS-module class suffixes ([class*="_name"]);
+ * see docs/selectors.md. Hashed class prefixes are never written here. */
+
+/* ── M1 page base ─────────────────────────────────────────────────────── */
+html[data-mui="mobile"],
+html[data-mui="mobile"] body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+/* Keep the app out of document scrolling. iOS may pan the visual viewport
+ * while the keyboard is open; follow its offset without scrolling the page.
+ * No transform: fixed drawer descendants must keep their viewport anchor. */
+html[data-mui="mobile"] #root {
+  position: fixed;
+  top: var(--mui-vtop, 0px);
+  left: 0;
+  width: 100%;
+  height: 100dvh;
+  height: var(--mui-vh, 100dvh);
+}
+/* contain still permits local rubber-banding; the sticky composer shares
+ * this scrollport, so suppress the boundary effect as well as chaining. */
+html[data-mui="mobile"] [data-conversation-scroll] {
+  overscroll-behavior-y: none;
+}
+/* iOS zooms into inputs whose computed size is below 16px. */
+html[data-mui="mobile"] [data-composer-input],
+html[data-mui="mobile"] [data-composer-placeholder],
+html[data-mui="mobile"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+html[data-mui="mobile"] textarea,
+html[data-mui="mobile"] select {
+  font-size: 16px !important;
+}
+html[data-mui="mobile"] * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── M2 frame: the center column owns the whole width ─────────────────── */
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"][data-rightbar-collapsed],
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"][data-rightbar-fullscreen],
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:has(> [data-rightbar-col]) {
+  grid-template-columns: 0 minmax(0, 1fr) 0 !important;
+}
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"] > [class*="_handle"] {
+  display: none !important;
+}
+/* The drawer leaves grid flow (position: fixed); pin the remaining columns
+ * to their tracks so auto-placement does not shift them left. */
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"] > [class*="_centerCol"] {
+  grid-column: 2;
+  grid-row: 1;
+}
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"] > [data-rightbar-col] {
+  grid-column: 3;
+  grid-row: 1;
+}
+html[data-mui="mobile"] [class*="_centerCol"] {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Sidebar → fixed drawer. Slides with `left`, not transform: a transformed
+ * column would become the containing block of fixed-position descendants. */
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"] > [class*="_sidebarCol"] {
+  position: fixed;
+  z-index: 30;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--mui-drawer-w) - 12px);
+  width: var(--mui-drawer-w);
+  --mui-drawer-w: min(86vw, 360px);
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  box-sizing: border-box;
+  border-right: none;
+  box-shadow: none;
+  transition: left 220ms cubic-bezier(.2, .8, .2, 1), box-shadow 220ms;
+  visibility: hidden;
+}
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-collapsed]) > [class*="_sidebarCol"] {
+  left: 0;
+  visibility: visible;
+  box-shadow: 0 0 32px rgb(0 0 0 / .22);
+}
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"][data-mui-dragging] > [class*="_sidebarCol"] {
+  transition: none;
+}
+/* The product sizes the expanded sidebar with an inline 280px. */
+html[data-mui="mobile"] [class*="_sidebarCol"] > [data-slot="sidebar"] > [class*="_root"] {
+  width: 100% !important;
+}
+/* Scrim: hit-tests as the frame itself; lib/client.js closes on that tap. */
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  background: rgb(0 0 0 / .36);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms;
+}
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-collapsed])::after {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"] > [class*="_sidebarCol"],
+  html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]::after { transition: none; }
+}
+
+/* ── M3 app bar: the conversation header, compacted ───────────────────── */
+html:not([data-mui="mobile"]) .mui-leading,
+html:not([data-mui="mobile"]) .mui-fab {
+  display: none !important;
+}
+.mui-leading {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.mui-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--dsw-alias-label-primary, currentColor);
+  cursor: pointer;
+}
+.mui-iconbtn:active { background: var(--dsw-alias-interactive-bg-hover, rgb(127 127 127 / .14)); }
+.mui-iconbtn svg { width: 20px; height: 20px; }
+html[data-mui="mobile"] [data-slot="conversation.header"] > header,
+html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) {
+  min-height: 0;
+  padding: calc(env(safe-area-inset-top) + 4px) 6px 0 4px;
+  column-gap: 2px;
+}
+html[data-mui="mobile"] header:has(> [data-conversation-header-leading]):not(:has([role="tablist"])) {
+  padding-bottom: 4px;
+}
+html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) [class*="_titleRow"] {
+  min-height: 40px;
+}
+html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) [class*="_titleCluster"] {
+  gap: 4px;
+}
+html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) [class*="_crumbCurrent"] {
+  max-width: none;
+  padding: 4px 4px;
+  font-size: 15px;
+}
+/* Informational chips that only cost title width on a phone. */
+html[data-mui="mobile"] [data-slot="conversation.session.header.actions"] > span[title],
+html[data-mui="mobile"] [data-team-action] [class*="_triggerLabel"] {
+  display: none !important;
+}
+html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) [class*="_headerActions"],
+html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) [class*="_headerUtilities"] {
+  gap: 2px;
+  margin-left: 0;
+}
+html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) [class*="_headerCorner"] {
+  margin: 0;
+}
+html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) [role="tablist"] {
+  gap: 24px;
+  margin-top: 2px;
+  padding-left: 12px;
+}
+
+/* Floating menu button for global panels (Plugins, Automation…), which
+ * replace the conversation and its header. */
+.mui-fab {
+  position: fixed;
+  z-index: 21;
+  top: calc(env(safe-area-inset-top) + 8px);
+  left: calc(env(safe-area-inset-left) + 8px);
+  display: none;
+  pointer-events: auto;
+  background: var(--dsw-alias-bg-base, #fff);
+  box-shadow: 0 1px 6px rgb(0 0 0 / .14);
+}
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not(:has([data-conversation-header-leading])) .mui-fab {
+  display: inline-flex;
+}
+/* Global panels draw their own page header (a window-drag row); start its
+ * content right of the floating menu button. */
+html[data-mui="mobile"] [class*="_centerCol"]:not(:has([data-conversation-header-leading])) [data-slot="main"] > * > [data-window-drag]:first-child {
+  padding-top: calc(env(safe-area-inset-top) + 12px);
+  padding-left: 60px;
+}
+
+/* ── M4 drawer contents ───────────────────────────────────────────────── */
+/* Row actions are hover-only on desktop; keep the "…" menu reachable. Pin
+ * and archive are also inside that menu, so their inline buttons stay out. */
+html[data-mui="mobile"] [class*="_sessionRow"] [class*="_rowActions"],
+html[data-mui="mobile"] [class*="_projectRow"] [class*="_rowActions"] {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html[data-mui="mobile"] [class*="_sessionRow"] [data-slot="sidebar.workspaces.session.row.action"] {
+  display: none !important;
+}
+html[data-mui="mobile"] [class*="_sessionRow"] [class*="_time"] {
+  display: none;
+}
+html[data-mui="mobile"] [class*="_sidebarCol"] [role="treeitem"] {
+  min-height: 40px;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+}
+
+/* Hover tooltips: a tap fires an emulated mouseenter, leaving a bubble
+ * behind. Click-pinned bubbles (info popovers) stay. */
+html[data-mui="mobile"] [class*="_bubble"][data-side]:not([data-pinned]) {
+  display: none !important;
+}
+
+/* ── right panel (full-screen on phones already) ──────────────────────── */
+html[data-mui="mobile"] [data-sidebar-right-panel] [data-dockkit-strip] {
+  padding-top: env(safe-area-inset-top);
+  touch-action: pan-x;
+}
+html[data-mui="mobile"] [data-sidebar-right-panel] [data-dockkit-split-button],
+html[data-mui="mobile"] [data-sidebar-right-panel] span:has(> [data-dockkit-split-button]),
+html[data-mui="mobile"] [data-sidebar-right-panel] [data-sidebar-right-mode] {
+  display: none !important;
+}
+
+/* ── M6 settings: full-screen list → section ──────────────────────────── */
+/* Back button lives in the settings.action slot; desktop never shows it. */
+.mui-settings-back { display: none; }
+html[data-mui="mobile"] [data-shortcut-modal="settings"] {
+  width: 100vw;
+  max-width: none;
+  height: var(--mui-vh, 100dvh);
+  border-radius: 0;
+  box-shadow: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  box-sizing: border-box;
+}
+/* List level: the section list fills the screen; only Close stays from the
+ * content header, pinned top-right. */
+html[data-mui="mobile"] [data-shortcut-modal="settings"]:not([data-mui-view="detail"]) > nav {
+  display: flex !important;
+  width: 100%;
+  flex: 1;
+  padding: 14px 12px 0;
+  gap: 14px;
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"]:not([data-mui-view="detail"]) > div {
+  position: absolute;
+  top: env(safe-area-inset-top);
+  right: env(safe-area-inset-right);
+  flex: none !important;
+  width: auto !important;
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"]:not([data-mui-view="detail"]) [class*="_options"],
+html[data-mui="mobile"] [data-shortcut-modal="settings"]:not([data-mui-view="detail"]) [class*="_actions"] {
+  display: none;
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] > nav [class*="_navTitle"] {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  padding: 0 8px;
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] [class*="_navList"] {
+  gap: 2px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] [class*="_navCell"] {
+  height: 50px;
+  padding: 0 12px;
+  gap: 12px;
+  font-size: 16px;
+  background: transparent;
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] [class*="_navCell"]:active {
+  background: var(--dsw-specific-sidebar-nav-item-active);
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] [class*="_navCell"] svg {
+  width: 20px;
+  height: 20px;
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] [class*="_navCell"]::after {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  border-top: 1.6px solid var(--dsw-alias-label-tertiary, #999);
+  border-right: 1.6px solid var(--dsw-alias-label-tertiary, #999);
+  transform: rotate(45deg);
+}
+/* Section level: nav goes, the content column takes the screen, and the
+ * header becomes a back bar. (!important beats the market plugin's own
+ * narrow-screen nav rule, which would otherwise hide the list too.) */
+html[data-mui="mobile"] [data-shortcut-modal="settings"][data-mui-view="detail"] > nav {
+  display: none !important;
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] [class*="_content"] {
+  flex: 1;
+  width: 100%;
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] [class*="_header"]:has(> [class*="_close"]) {
+  height: auto;
+  min-height: 52px;
+  align-items: center;
+  padding: 6px 8px 6px 4px;
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] [class*="_header"]:has(> [class*="_close"]) > [class*="_actions"] {
+  flex: 1;
+  margin-left: 0;
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] .mui-settings-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  height: 40px;
+  margin-right: auto;
+  padding: 0 8px 0 2px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] .mui-settings-back:active {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] .mui-settings-back svg {
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] .mui-settings-back span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] [class*="_close"] {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] [class*="_close"] svg {
+  width: 18px;
+  height: 18px;
+}
+html[data-mui="mobile"] [data-shortcut-modal="settings"] [class*="_options"] {
+  padding: 4px 16px calc(env(safe-area-inset-bottom) + 24px);
+  overscroll-behavior: contain;
+  /* Hidden hover tips ([data-tip]::after) near the edge would otherwise
+   * let the page wobble sideways. */
+  overflow-x: hidden;
+}
+/* Plugin Market's tab strip is wider than a phone: let it scroll sideways. */
+html[data-mui="mobile"] [data-shortcut-modal="settings"] [data-dsh-market-root] [class*="_tabs"] {
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+/* Menus opened from inside settings rise as a bottom sheet. The product
+ * positions portaled menus with inline left/top every frame; !important
+ * keeps the sheet docked. The spread shadow is the scrim (visual only, so
+ * an outside tap still reaches the product's dismiss handler). */
+html[data-mui="mobile"] body:has([data-shortcut-modal="settings"]) > [role="menu"] {
+  left: 0 !important;
+  right: 0 !important;
+  top: auto !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  max-height: 70vh;
+  box-sizing: border-box;
+  padding: 8px 8px calc(env(safe-area-inset-bottom) + 12px);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / .36);
+  animation: mui-sheet-in 200ms cubic-bezier(.2, .8, .2, 1);
+}
+html[data-mui="mobile"] body:has([data-shortcut-modal="settings"]) > [role="menu"]::before {
+  content: "";
+  display: block;
+  flex: none;
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 8px;
+  border-radius: 2px;
+  background: var(--dsw-alias-border-l3, rgb(127 127 127 / .4));
+}
+html[data-mui="mobile"] body:has([data-shortcut-modal="settings"]) > [role="menu"] > [role="presentation"] {
+  overflow-y: auto;
+}
+html[data-mui="mobile"] body:has([data-shortcut-modal="settings"]) > [role="menu"] [role^="menuitem"] {
+  min-height: 48px;
+  padding: 10px 14px;
+  gap: 10px;
+  font-size: 16px;
+  line-height: 22px;
+  border-radius: 10px;
+}
+html[data-mui="mobile"] body:has([data-shortcut-modal="settings"]) > [role="menu"] [role^="menuitem"] svg {
+  width: 18px;
+  height: 18px;
+}
+@keyframes mui-sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-mui="mobile"] body:has([data-shortcut-modal="settings"]) > [role="menu"] { animation: none; }
+}
+
+/* ── composer: clear the home indicator ───────────────────────────────── */
+html[data-mui="mobile"] [data-composer-seat] {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ── composer stats strip: context · TPS · cache ──────────────────────── */
+/* On a phone the product's two pills and the context ring truncate each
+ * other; the plugin's strip (same projections) replaces all three. */
+.mui-stats { display: none; }
+html[data-mui="mobile"] [data-composer-stats],
+html[data-mui="mobile"] [data-slot="conversation.composer.dock"] ~ * {
+  display: none !important;
+}
+html[data-mui="mobile"] .mui-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  font: inherit;
+  font-size: 12px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+}
+html[data-mui="mobile"] .mui-stats:active {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+.mui-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 0 6px;
+}
+.mui-stat + .mui-stat {
+  border-left: 0.5px solid var(--dsw-alias-border-l3, rgb(127 127 127 / .35));
+}
+.mui-stat svg {
+  flex: none;
+  width: 13px;
+  height: 13px;
+}
+.mui-stat b {
+  color: var(--dsw-alias-label-secondary);
+  font-weight: 500;
+}
+.mui-stat-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: .8;
+}
+/* Below ~360px the token figures go first, then the labels. */
+@media (max-width: 370px) {
+  .mui-stat-sub { display: none; }
+}
+@media (max-width: 330px) {
+  .mui-stat-k:not(:last-child) { display: none; }
+}
+.mui-ring-track,
+.mui-ring-fill {
+  fill: none;
+  stroke-width: 2.2;
+}
+.mui-ring-track { stroke: var(--dsw-alias-border-l3, rgb(127 127 127 / .3)); }
+.mui-ring-fill { stroke: var(--dsw-alias-label-tertiary); stroke-linecap: round; }
+.mui-ring-fill[data-level="mid"] { stroke: var(--dsw-alias-state-warning-primary, #d98a00); }
+.mui-ring-fill[data-level="high"] { stroke: var(--dsw-alias-state-error-primary, #e5484d); }
+
+/* Stats bottom sheet. */
+.mui-sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.mui-sheet-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / .36);
+  animation: mui-fade-in 200ms ease-out;
+}
+.mui-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+  padding: 6px 0 calc(env(safe-area-inset-bottom) + 12px);
+  border-radius: 16px 16px 0 0;
+  background: var(--dsw-alias-bg-layer-2, #fff);
+  color: var(--dsw-alias-label-primary);
+  box-shadow: 0 -4px 24px rgb(0 0 0 / .16);
+  animation: mui-sheet-in 220ms cubic-bezier(.2, .8, .2, 1);
+}
+.mui-sheet-grip {
+  flex: none;
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 2px;
+  border-radius: 2px;
+  background: var(--dsw-alias-border-l3, rgb(127 127 127 / .4));
+}
+.mui-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 0 20px;
+  font-size: 17px;
+  font-weight: 600;
+}
+.mui-sheet-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 20px;
+}
+.mui-sheet-body section {
+  padding: 14px 0;
+}
+.mui-sheet-body section + section {
+  border-top: 0.5px solid var(--dsw-alias-border-l2, rgb(127 127 127 / .2));
+}
+.mui-sheet-sechead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--dsw-alias-label-secondary);
+}
+.mui-sheet-sechead b {
+  color: var(--dsw-alias-label-primary);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.mui-sheet-sechead small {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--dsw-alias-label-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.mui-sheet-body dl { margin: 0; }
+.mui-sheet-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 34px;
+  font-size: 14px;
+}
+.mui-sheet-row dt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--dsw-alias-label-secondary);
+}
+.mui-sheet-row dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.mui-bar {
+  display: flex;
+  gap: 1px;
+  height: 6px;
+  margin: 4px 0 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--dsw-alias-interactive-bg-hover, rgb(127 127 127 / .14));
+}
+.mui-bar i {
+  flex: none;
+  min-width: 2px;
+  height: 100%;
+  background: var(--dsw-alias-label-tertiary);
+}
+.mui-bar i[data-k="system"], .mui-swatch[data-k="system"] { background: var(--dsw-static-neutral-bluish-400, #8a94a6); }
+.mui-bar i[data-k="tools"], .mui-swatch[data-k="tools"] { background: #a78bfa; }
+.mui-bar i[data-k="messages"], .mui-swatch[data-k="messages"] { background: var(--dsw-static-blue-450, #3b82f6); }
+.mui-swatch {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+@keyframes mui-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mui-sheet, .mui-sheet-scrim { animation: none; }
+}
+
+/* ── conversation menus → bottom sheets ───────────────────────────────── */
+/* Model picker, "…" row menus, the "+" command list: same docked sheet as
+ * in settings. Menus with a side submenu stay anchored (a sheet would
+ * clip the side card). */
+html[data-mui="mobile"] body > [role="menu"]:not(:has([aria-haspopup="menu"])),
+html[data-mui="mobile"] [class*="_overlayAnchor"] > * > [class*="_surface"]:has([role="listbox"]) {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: auto !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  max-height: 70vh !important;
+  box-sizing: border-box;
+  padding: 8px 8px calc(env(safe-area-inset-bottom) + 12px);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / .36);
+  animation: mui-sheet-in 200ms cubic-bezier(.2, .8, .2, 1);
+}
+html[data-mui="mobile"] body > [role="menu"]:not(:has([aria-haspopup="menu"]))::before,
+html[data-mui="mobile"] [class*="_overlayAnchor"] > * > [class*="_surface"]:has([role="listbox"])::before {
+  content: "";
+  display: block;
+  flex: none;
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 8px;
+  border-radius: 2px;
+  background: var(--dsw-alias-border-l3, rgb(127 127 127 / .4));
+}
+html[data-mui="mobile"] body > [role="menu"]:not(:has([aria-haspopup="menu"])) > [role="presentation"] {
+  overflow-y: auto;
+}
+html[data-mui="mobile"] body > [role="menu"]:not(:has([aria-haspopup="menu"])) [role^="menuitem"],
+html[data-mui="mobile"] [class*="_overlayAnchor"] [role="listbox"] [role="option"] {
+  min-height: 48px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-size: 16px;
+  line-height: 22px;
+  border-radius: 10px;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-mui="mobile"] body > [role="menu"],
+  html[data-mui="mobile"] [class*="_overlayAnchor"] > * > [class*="_surface"] { animation: none !important; }
+}

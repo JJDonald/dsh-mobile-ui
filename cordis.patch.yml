@@ -1,0 +1,5 @@
+# Bundle patch: mount the plugin row. Removing this bundle from the profile
+# (dsh plugin --profile web remove dsh-mobile-ui) restores the stock UI.
+- insert:
+    - id: mobile-ui
+      name: 'dsh-mobile-ui'
