@@ -380,8 +380,8 @@ html[data-mui="mobile"] [data-shortcut-modal="settings"] [data-dsh-market-root] 
 
 /* Menus opened from inside settings rise as a bottom sheet. The product
  * positions portaled menus with inline left/top every frame; !important
- * keeps the sheet docked. The spread shadow is the scrim (visual only, so
- * an outside tap still reaches the product's dismiss handler). */
+ * keeps the sheet docked. Menus remain non-modal: no visual backdrop,
+ * and outside taps retain the product's native dismiss behavior. */
 html[data-mui="mobile"] body:has([data-shortcut-modal="settings"]) > [role="menu"] {
   left: 0 !important;
   right: 0 !important;
@@ -394,7 +394,7 @@ html[data-mui="mobile"] body:has([data-shortcut-modal="settings"]) > [role="menu
   box-sizing: border-box;
   padding: 8px 8px calc(env(safe-area-inset-bottom) + 12px);
   border-radius: 16px 16px 0 0;
-  box-shadow: 0 0 0 100vmax rgb(0 0 0 / .36);
+  box-shadow: none;
   animation: mui-sheet-in 200ms cubic-bezier(.2, .8, .2, 1);
 }
 html[data-mui="mobile"] body:has([data-shortcut-modal="settings"]) > [role="menu"]::before {
@@ -650,7 +650,7 @@ html[data-mui="mobile"] [class*="_overlayAnchor"] > * > [class*="_surface"]:has(
   box-sizing: border-box;
   padding: 8px 8px calc(env(safe-area-inset-bottom) + 12px);
   border-radius: 16px 16px 0 0;
-  box-shadow: 0 0 0 100vmax rgb(0 0 0 / .36);
+  box-shadow: none;
   animation: mui-sheet-in 200ms cubic-bezier(.2, .8, .2, 1);
 }
 html[data-mui="mobile"] body > [role="menu"]:not(:has([aria-haspopup="menu"]))::before,
