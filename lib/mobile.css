@@ -440,6 +440,8 @@ html[data-mui="mobile"] [data-composer-seat] {
  * other; the plugin's strip (same projections) replaces all three. */
 .mui-stats { display: none; }
 html[data-mui="mobile"] [data-composer-stats],
+html[data-mui="mobile"] [data-slot="conversation.composer.dock"] [data-composer-stat="activity"],
+html[data-mui="mobile"] [data-slot="conversation.composer.dock"] [data-composer-stat="usage"],
 html[data-mui="mobile"] [data-slot="conversation.composer.dock"] ~ * {
   display: none !important;
 }
