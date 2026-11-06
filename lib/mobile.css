@@ -41,21 +41,24 @@ html[data-mui="mobile"] * {
 }
 
 /* ── M2 frame: the center column owns the whole width ─────────────────── */
-html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"][data-rightbar-collapsed],
-html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"][data-rightbar-fullscreen],
-html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:has(> [data-rightbar-col]) {
+/* DSH ≥0.2.2 draws its own phone drawer, mask and leading menu button and
+ * marks the frame [data-sidebar-drawer]. Everything in M2/M3 that rebuilds
+ * the drawer or the app bar applies only to frames without that marker. */
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer])[data-rightbar-collapsed],
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer])[data-rightbar-fullscreen],
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]):has(> [data-rightbar-col]) {
   grid-template-columns: 0 minmax(0, 1fr) 0 !important;
 }
-html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"] > [class*="_handle"] {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) > [class*="_handle"] {
   display: none !important;
 }
 /* The drawer leaves grid flow (position: fixed); pin the remaining columns
  * to their tracks so auto-placement does not shift them left. */
-html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"] > [class*="_centerCol"] {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) > [class*="_centerCol"] {
   grid-column: 2;
   grid-row: 1;
 }
-html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"] > [data-rightbar-col] {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) > [data-rightbar-col] {
   grid-column: 3;
   grid-row: 1;
 }
@@ -66,7 +69,7 @@ html[data-mui="mobile"] [class*="_centerCol"] {
 
 /* Sidebar → fixed drawer. Slides with `left`, not transform: a transformed
  * column would become the containing block of fixed-position descendants. */
-html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"] > [class*="_sidebarCol"] {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) > [class*="_sidebarCol"] {
   position: fixed;
   z-index: 30;
   top: 0;
@@ -83,20 +86,20 @@ html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"] > [class*="_sideb
   transition: left 220ms cubic-bezier(.2, .8, .2, 1), box-shadow 220ms;
   visibility: hidden;
 }
-html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-collapsed]) > [class*="_sidebarCol"] {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]):not([data-sidebar-collapsed]) > [class*="_sidebarCol"] {
   left: 0;
   visibility: visible;
   box-shadow: 0 0 32px rgb(0 0 0 / .22);
 }
-html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"][data-mui-dragging] > [class*="_sidebarCol"] {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer])[data-mui-dragging] > [class*="_sidebarCol"] {
   transition: none;
 }
 /* The product sizes the expanded sidebar with an inline 280px. */
-html[data-mui="mobile"] [class*="_sidebarCol"] > [data-slot="sidebar"] > [class*="_root"] {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) > [class*="_sidebarCol"] > [data-slot="sidebar"] > [class*="_root"] {
   width: 100% !important;
 }
 /* Scrim: hit-tests as the frame itself; lib/client.js closes on that tap. */
-html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]::after {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer])::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -106,18 +109,20 @@ html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]::after {
   pointer-events: none;
   transition: opacity 220ms;
 }
-html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-collapsed])::after {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]):not([data-sidebar-collapsed])::after {
   opacity: 1;
   pointer-events: auto;
 }
 @media (prefers-reduced-motion: reduce) {
-  html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"] > [class*="_sidebarCol"],
-  html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]::after { transition: none; }
+  html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) > [class*="_sidebarCol"],
+  html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer])::after { transition: none; }
 }
 
 /* ── M3 app bar: the conversation header, compacted ───────────────────── */
 html:not([data-mui="mobile"]) .mui-leading,
-html:not([data-mui="mobile"]) .mui-fab {
+html:not([data-mui="mobile"]) .mui-fab,
+html:has([data-sidebar-drawer]) .mui-leading,
+html:has([data-sidebar-drawer]) .mui-fab {
   display: none !important;
 }
 .mui-leading {
@@ -140,22 +145,22 @@ html:not([data-mui="mobile"]) .mui-fab {
 }
 .mui-iconbtn:active { background: var(--dsw-alias-interactive-bg-hover, rgb(127 127 127 / .14)); }
 .mui-iconbtn svg { width: 20px; height: 20px; }
-html[data-mui="mobile"] [data-slot="conversation.header"] > header,
-html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) [data-slot="conversation.header"] > header,
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) header:has(> [data-conversation-header-leading]) {
   min-height: 0;
   padding: calc(env(safe-area-inset-top) + 4px) 6px 0 4px;
   column-gap: 2px;
 }
-html[data-mui="mobile"] header:has(> [data-conversation-header-leading]):not(:has([role="tablist"])) {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) header:has(> [data-conversation-header-leading]):not(:has([role="tablist"])) {
   padding-bottom: 4px;
 }
-html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) [class*="_titleRow"] {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) header:has(> [data-conversation-header-leading]) [class*="_titleRow"] {
   min-height: 40px;
 }
-html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) [class*="_titleCluster"] {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) header:has(> [data-conversation-header-leading]) [class*="_titleCluster"] {
   gap: 4px;
 }
-html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) [class*="_crumbCurrent"] {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) header:has(> [data-conversation-header-leading]) [class*="_crumbCurrent"] {
   max-width: none;
   padding: 4px 4px;
   font-size: 15px;
@@ -165,15 +170,15 @@ html[data-mui="mobile"] [data-slot="conversation.session.header.actions"] > span
 html[data-mui="mobile"] [data-team-action] [class*="_triggerLabel"] {
   display: none !important;
 }
-html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) [class*="_headerActions"],
-html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) [class*="_headerUtilities"] {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) header:has(> [data-conversation-header-leading]) [class*="_headerActions"],
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) header:has(> [data-conversation-header-leading]) [class*="_headerUtilities"] {
   gap: 2px;
   margin-left: 0;
 }
-html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) [class*="_headerCorner"] {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) header:has(> [data-conversation-header-leading]) [class*="_headerCorner"] {
   margin: 0;
 }
-html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) [role="tablist"] {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) header:has(> [data-conversation-header-leading]) [role="tablist"] {
   gap: 24px;
   margin-top: 2px;
   padding-left: 12px;
@@ -191,12 +196,12 @@ html[data-mui="mobile"] header:has(> [data-conversation-header-leading]) [role="
   background: var(--dsw-alias-bg-base, #fff);
   box-shadow: 0 1px 6px rgb(0 0 0 / .14);
 }
-html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not(:has([data-conversation-header-leading])) .mui-fab {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]):not(:has([data-conversation-header-leading])) .mui-fab {
   display: inline-flex;
 }
 /* Global panels draw their own page header (a window-drag row); start its
  * content right of the floating menu button. */
-html[data-mui="mobile"] [class*="_centerCol"]:not(:has([data-conversation-header-leading])) [data-slot="main"] > * > [data-window-drag]:first-child {
+html[data-mui="mobile"] [data-slot="root"] > [class*="_frame"]:not([data-sidebar-drawer]) > [class*="_centerCol"]:not(:has([data-conversation-header-leading])) [data-slot="main"] > * > [data-window-drag]:first-child {
   padding-top: calc(env(safe-area-inset-top) + 12px);
   padding-left: 60px;
 }
